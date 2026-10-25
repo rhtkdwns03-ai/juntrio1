@@ -16,7 +16,7 @@
    ============================================================ */
 var CONFIG = {
   apiKey: "37E11865-1EE4-46EB-A352-DFE63DCD7169",   // 브이월드 인증키
-  home: {"lon":126.656092,"lat":37.446786,"height":290,"heading":28,"tilt":-34},
+  home: {"lon":126.657702,"lat":37.448663,"height":435,"heading":28,"tilt":-34},
   buildings: { "1호관": {"lon":126.657954,"lat":37.447461,"h":20}, "6호관": {"lon":126.657685,"lat":37.448815,"h":32}, "11호관": {"lon":126.658051,"lat":37.446951,"h":13} },
   radius: 45   // 등록 지점에서 이 거리(m) 안을 누르면 그 건물로 봅니다
 };
@@ -833,7 +833,13 @@ function applyQuality(){
   tryDo(()=>{ viewer.imageryLayers&&Array.from({length:viewer.imageryLayers.length},(_,i)=>viewer.imageryLayers.get(i)).forEach(l=>{ if('minificationFilter' in l&&window.Cesium.TextureMinificationFilter) l.minificationFilter=Cesium.TextureMinificationFilter.LINEAR }) });
   tryDo(()=>{ sc.requestRender&&sc.requestRender() });
 }
+// 시작 시점: 「이 시점을 시작 위치로」가 저장한 값과 똑같은 방식(Cesium 카메라)으로 다시 놓아, 저장한 화면이 그대로 열리게 합니다
+let userMoved=false;
+function placeHome(){ if(!viewer||userMoved) return; const h=STORE.home||CONFIG.home;
+  try{viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(h.lon,h.lat,h.height),orientation:{heading:Cesium.Math.toRadians(h.heading||0),pitch:Cesium.Math.toRadians(h.tilt||-42),roll:0}})}catch(e){} }
 function onMapReady(){
+  placeHome(); [300,900,1800].forEach(t=>setTimeout(placeHome,t));
+  try{Q('#vmap').addEventListener('pointerdown',()=>{userMoved=true}); Q('#vmap').addEventListener('wheel',()=>{userMoved=true},{passive:true})}catch(e){}
   applyQuality();
   // 브이월드가 건물 모델을 나중에 불러오므로 처음 20초 동안 몇 번 더 적용하고, 화면을 움직일 때마다 다시 확인합니다
   [1500,4000,8000,14000,20000].forEach(t=>setTimeout(applyQuality,t));
